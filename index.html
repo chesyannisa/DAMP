@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Tracker - Pink Edition</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="assets/Logo.png" alt="Logo Money Tracker" class="logo">
+                    <!-- <div class="logo-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div> -->
+                    <div class="logo-text">
+                        <h1>Monetra</h1>
+                        <p>Kelola keuangan Anda</p>
+                    </div>
+                </div>
+                <button class="close-btn" id="closeSidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <p class="nav-label">Menu Utama</p>
+                <button class="nav-item active" data-view="dashboard">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="add-transaction">
+                    <i class="fas fa-plus"></i>
+                    <span>Tambah Transaksi</span>
+                </button>
+                <button class="nav-item" data-view="reports">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Laporan Keuangan</span>
+                </button>
+                <button class="reset-btn" id="resetData">
+                    <i class="fas fa-trash"></i>
+                    <span>Reset Semua Data</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="tips-card">
+                    <p class="tips-title">💡 Tips</p>
+                    <p class="tips-text">Catat setiap transaksi untuk kontrol keuangan yang lebih baik!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Mobile Header -->
+            <div class="mobile-header">
+                <button class="menu-btn" id="openSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Money Tracker</h2>
+            </div>
+
+            <!-- Dashboard View -->
+            <div class="view active" id="dashboard-view">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard Keuangan</h1>
+                    <p class="page-subtitle">Gambaran keuangan Anda secara real-time</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Saldo Total</p>
+                                <p class="stat-value" id="totalBalance">Rp 0</p>
+                                <p class="stat-desc" id="balanceStatus">Keuangan sehat</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Pemasukan</p>
+                                <p class="stat-value income" id="totalIncome">Rp 0</p>
+                                <p class="stat-desc" id="incomeCount">0 transaksi</p>
+                            </div>
+                            <div class="stat-icon income">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Pengeluaran</p>
+                                <p class="stat-value expense" id="totalExpense">Rp 0</p>
+                                <p class="stat-desc" id="expenseCount">0 transaksi</p>
+                            </div>
+                            <div class="stat-icon expense">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Rasio Saving</p>
+                                <p class="stat-value" id="savingRatio">0%</p>
+                                <p class="stat-desc">Dari total pemasukan</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-trending-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <!-- <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Pengeluaran per Kategori</h3>
+                            <p>Distribusi pengeluaran berdasarkan kategori</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expenseChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Trend Mingguan</h3>
+                            <p>Pemasukan vs Pengeluaran 7 hari terakhir</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div> -->
+
+                <!-- Recent Transactions -->
+                <!-- <div class="card">
+                    <div class="card-header">
+                        <h3>Transaksi Terbaru</h3>
+                        <p>5 transaksi terakhir Anda</p>
+                    </div>
+                    <div class="transactions-list" id="recentTransactions">
+                        Transactions will be populated by JavaScript
+                    </div>
+                </div> -->
+            </div>
+
+            <!-- Add Transaction View -->
+            <div class="view" id="add-transaction-view">
+                <div class="page-header">
+                    <h1 class="page-title">Tambah Transaksi</h1>
+                    <p class="page-subtitle">Catat transaksi harian Anda dengan mudah dan cepat</p>
+                </div>
+
+                <div class="form-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Form Transaksi Baru</h2>
+                            <p>Isi detail transaksi Anda di bawah ini</p>
+                        </div>
+                        
+                        <form id="transactionForm" class="transaction-form">
+                            <!-- Transaction Type -->
+                            <div class="form-group">
+                                <label class="form-label">Tipe Transaksi</label>
+                                <div class="type-buttons">
+                                    <button type="button" class="type-btn" data-type="income">
+                                        <div class="type-indicator income"></div>
+                                        <span>Pemasukan</span>
+                                    </button>
+                                    <button type="button" class="type-btn active" data-type="expense">
+                                        <div class="type-indicator expense"></div>
+                                        <span>Pengeluaran</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Amount -->
+                            <div class="form-group">
+                                <label for="amount" class="form-label">Jumlah (Rp) *</label>
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">Rp</span>
+                                    <input type="text" id="amount" class="form-input" placeholder="0" required>
+                                </div>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="form-group">
+                                <label for="category" class="form-label">Kategori *</label>
+                                <select id="category" class="form-select" required>
+                                    <option value="">Pilih kategori</option>
+                                </select>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="form-group">
+                                <label for="description" class="form-label">Deskripsi *</label>
+                                <textarea id="description" class="form-textarea" placeholder="Masukkan deskripsi transaksi..." required></textarea>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="form-group">
+                                <label for="date" class="form-label">Tanggal Transaksi</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-calendar input-icon"></i>
+                                    <input type="date" id="date" class="form-input">
+                                </div>
+                            </div>
+
+                            <!-- Attachment -->
+                            <div class="form-group">
+                                <label for="attachment" class="form-label">Lampiran (Opsional)</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-paperclip input-icon"></i>
+                                    <input type="text" id="attachment" class="form-input" placeholder="URL lampiran atau catatan tambahan">
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="submit-btn">
+                                Simpan Transaksi
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Tips Card -->
+                    <div class="tips-card-large">
+                        <h3>💡 Tips Pencatatan</h3>
+                        <ul>
+                            <li>Catat transaksi sesegera mungkin agar tidak lupa</li>
+                            <li>Gunakan deskripsi yang jelas dan spesifik</li>
+                            <li>Pilih kategori yang tepat untuk laporan yang akurat</li>
+                            <li>Lampirkan bukti transaksi jika diperlukan</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div class="view" id="reports-view">
+                <div class="page-header">
+                    <h1 class="page-title">Laporan Keuangan</h1>
+                    <p class="page-subtitle">Analisis mendalam tentang pola keuangan Anda</p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Pemasukan</p>
+                                <p class="stat-value" id="reportIncome">Rp 0</p>
+                                <p class="stat-desc" id="reportIncomeCount">0 transaksi</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-trending-up"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Total Pengeluaran</p>
+                                <p class="stat-value expense" id="reportExpense">Rp 0</p>
+                                <p class="stat-desc" id="reportExpenseCount">0 transaksi</p>
+                            </div>
+                            <div class="stat-icon expense">
+                                <i class="fas fa-trending-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Saldo Bersih</p>
+                                <p class="stat-value" id="reportBalance">Rp 0</p>
+                                <p class="stat-desc" id="reportBalanceStatus">Surplus</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <p class="stat-label">Rasio Pengeluaran</p>
+                                <p class="stat-value" id="reportRatio">0%</p>
+                                <p class="stat-desc">Dari total pemasukan</p>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-target"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pie Charts -->
+                <div class="charts-grid">
+                    <!-- <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Distribusi Pengeluaran</h3>
+                            <p>Breakdown pengeluaran berdasarkan kategori</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expensePieChart" width="400" height="350"></canvas>
+                        </div>
+                    </div> -->
+
+                    <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Pengeluaran per Kategori</h3>
+                            <p>Distribusi pengeluaran berdasarkan kategori</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expenseChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Trend Mingguan</h3>
+                            <p>Pemasukan vs Pengeluaran 7 hari terakhir</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                    <div class="card-header">
+                        <h3>Transaksi Terbaru</h3>
+                        <p>5 transaksi terakhir Anda</p>
+                    </div>
+                    <div class="transactions-list" id="recentTransactions">
+                        <!-- Transactions will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                </div>
+
+                    <!-- <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Distribusi Pemasukan</h3>
+                            <p>Breakdown pemasukan berdasarkan kategori</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="incomePieChart" width="400" height="350"></canvas>
+                        </div>
+                    </div> -->
+                </div>
+
+                <!-- Category Report Table -->
+                <!-- <div class="card">
+                    <div class="card-header">
+                        <h3>Laporan Detail per Kategori</h3>
+                        <p>Analisis mendalam untuk setiap kategori transaksi</p>
+                    </div>
+                    <div class="table-container">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th>Tipe</th>
+                                    <th>Total</th>
+                                    <th>Transaksi</th>
+                                    <th>Rata-rata</th>
+                                    <th>Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryReportTable">
+                                Table rows will be populated by JavaScript 
+                            </tbody>
+                        </table>
+                    </div>
+                </div> -->
+
+                <!-- Financial Insights -->
+                <!-- <div class="card">
+                    <div class="card-header">
+                        <h3>Insight Keuangan</h3>
+                        <p>Analisis dan rekomendasi berdasarkan pola keuangan Anda</p>
+                    </div>
+                    <div class="insights-container" id="financialInsights"> -->
+                        <!-- Insights will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -64,6 +64,24 @@ class MoneyTracker {
                 description: 'Bensin motor',
                 date: new Date().toISOString().split('T')[0],
                 attachment: ''
+            },
+            {
+                id: Date.now() + 4,
+                type: 'expense',
+                amount: 100000,
+                category: 'Hiburan',
+                description: 'Nonton film',
+                date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                attachment: ''
+            },
+            {
+                id: Date.now() + 5,
+                type: 'income',
+                amount: 1000000,
+                category: 'Freelance',
+                description: 'Proyek desain website',
+                date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
+                attachment: ''
             }
         ];
         
@@ -113,6 +131,17 @@ class MoneyTracker {
         // Amount input formatting
         document.getElementById('amount').addEventListener('input', (e) => {
             this.formatAmountInput(e.target);
+        });
+        
+        // Reset data button
+        document.getElementById("resetData").addEventListener("click", () => {
+            if (confirm("Apakah Anda yakin ingin menghapus semua data transaksi?")) {
+                localStorage.removeItem("moneyTrackerTransactions");
+                this.transactions = [];
+                this.updateDashboard();
+                this.updateReports();
+                alert("Semua data transaksi berhasil direset.");
+            }
         });
     }
 
@@ -225,29 +254,6 @@ class MoneyTracker {
         this.updateReports();
 
         alert('Transaksi berhasil ditambahkan!');
-
-        document.getElementById("resetData").addEventListener("click", () => {
-  localStorage.removeItem("transactions");
-  tracker.transactions = [];
-  tracker.updateDashboard();
-  tracker.updateReports();
-
-  document.getElementById("resetData").addEventListener("click", () => {
-  transactions.length = 0;
-  updateUI();
-});
-
-document.getElementById("resetData").addEventListener("click", () => {
-  localStorage.removeItem("transactions");
-  transactions.length = 0;
-  updateUI();
-
-  alert("Semua data transaksi berhasil direset.");
-});
-
-
-});
-
     }
 
     updateDashboard() {
@@ -283,14 +289,12 @@ document.getElementById("resetData").addEventListener("click", () => {
         document.getElementById('reportExpenseCount').textContent = `${stats.expenseCount} transaksi`;
         document.getElementById('reportBalanceStatus').textContent = stats.balance >= 0 ? 'Surplus' : 'Defisit';
 
-        // Update pie charts
-        this.updatePieCharts();
+        // Update charts
+        this.updateExpensePieChart();
+        this.updateTrendChart();
         
-        // Update category report table
-        this.updateCategoryReportTable();
-        
-        // Update financial insights
-        this.updateFinancialInsights();
+        // Update recent transactions
+        this.updateRecentTransactions();
     }
 
     calculateStats() {
@@ -321,6 +325,11 @@ document.getElementById("resetData").addEventListener("click", () => {
         
         container.innerHTML = '';
         
+        if (recentTransactions.length === 0) {
+            container.innerHTML = '<div class="empty-state">Belum ada transaksi. Mulai tambahkan transaksi Anda!</div>';
+            return;
+        }
+        
         recentTransactions.forEach(transaction => {
             const item = document.createElement('div');
             item.className = 'transaction-item';
@@ -346,12 +355,15 @@ document.getElementById("resetData").addEventListener("click", () => {
     }
 
     updateDashboardCharts() {
-        this.updateExpenseBarChart();
+        this.updateExpensePieChart();
         this.updateTrendChart();
     }
 
-    updateExpenseBarChart() {
+    // Updated function to create a pie chart for expense categories
+    updateExpensePieChart() {
         const canvas = document.getElementById('expenseChart');
+        if (!canvas) return;
+        
         const ctx = canvas.getContext('2d');
         
         // Clear previous chart
@@ -359,35 +371,63 @@ document.getElementById("resetData").addEventListener("click", () => {
             window.expenseChart.destroy();
         }
         
-        const expenseByCategory = this.getExpenseByCategory();
+        const expenseData = this.getExpenseByCategory();
+        
+        if (expenseData.length === 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tidak ada data pengeluaran', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        // Animation configuration
+        const animationOptions = {
+            animateRotate: true,
+            animateScale: true
+        };
         
         window.expenseChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'pie',
             data: {
-                labels: expenseByCategory.map(item => item.category),
+                labels: expenseData.map(item => item.category),
                 datasets: [{
-                    label: 'Pengeluaran',
-                    data: expenseByCategory.map(item => item.amount),
-                    backgroundColor: '#ec4899',
-                    borderColor: '#be185d',
-                    borderWidth: 1,
-                    borderRadius: 4
+                    data: expenseData.map(item => item.amount),
+                    backgroundColor: expenseData.map(item => item.color),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 15
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: animationOptions,
                 plugins: {
                     legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'Rp ' + (value / 1000) + 'K';
+                        position: 'right',
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const value = context.raw;
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                const formattedValue = new Intl.NumberFormat('id-ID', {
+                                    style: 'currency',
+                                    currency: 'IDR',
+                                    minimumFractionDigits: 0
+                                }).format(value);
+                                return `${context.label}: ${formattedValue} (${percentage}%)`;
                             }
                         }
                     }
@@ -396,8 +436,11 @@ document.getElementById("resetData").addEventListener("click", () => {
         });
     }
 
+    // Updated function to ensure the trend chart displays income vs expense data correctly
     updateTrendChart() {
         const canvas = document.getElementById('trendChart');
+        if (!canvas) return;
+        
         const ctx = canvas.getContext('2d');
         
         // Clear previous chart
@@ -418,8 +461,13 @@ document.getElementById("resetData").addEventListener("click", () => {
                         borderColor: '#ec4899',
                         backgroundColor: 'rgba(236, 72, 153, 0.1)',
                         borderWidth: 3,
-                        fill: false,
-                        tension: 0.4
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ec4899',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     },
                     {
                         label: 'Pengeluaran',
@@ -427,22 +475,58 @@ document.getElementById("resetData").addEventListener("click", () => {
                         borderColor: '#be185d',
                         backgroundColor: 'rgba(190, 24, 93, 0.1)',
                         borderWidth: 3,
-                        fill: false,
-                        tension: 0.4
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#be185d',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
                     legend: {
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.raw;
+                                const formattedValue = new Intl.NumberFormat('id-ID', {
+                                    style: 'currency',
+                                    currency: 'IDR',
+                                    minimumFractionDigits: 0
+                                }).format(value * 1000); // Convert back from thousands
+                                return `${label}: ${formattedValue}`;
+                            }
+                        }
                     }
                 },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(236, 72, 153, 0.1)'
+                        },
                         ticks: {
                             callback: function(value) {
                                 return 'Rp ' + value + 'K';
@@ -452,200 +536,6 @@ document.getElementById("resetData").addEventListener("click", () => {
                 }
             }
         });
-    }
-
-    updatePieCharts() {
-        this.updateExpensePieChart();
-        this.updateIncomePieChart();
-    }
-
-    updateExpensePieChart() {
-        const canvas = document.getElementById('expensePieChart');
-        const ctx = canvas.getContext('2d');
-        
-        // Clear previous chart
-        if (window.expensePieChart) {
-            window.expensePieChart.destroy();
-        }
-        
-        const expenseData = this.getExpenseByCategory();
-        
-        if (expenseData.length === 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Tidak ada data pengeluaran', canvas.width / 2, canvas.height / 2);
-            return;
-        }
-        
-        window.expensePieChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: expenseData.map(item => item.category),
-                datasets: [{
-                    data: expenseData.map(item => item.amount),
-                    backgroundColor: expenseData.map(item => item.color),
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${percentage}%`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    updateIncomePieChart() {
-        const canvas = document.getElementById('incomePieChart');
-        const ctx = canvas.getContext('2d');
-        
-        // Clear previous chart
-        if (window.incomePieChart) {
-            window.incomePieChart.destroy();
-        }
-        
-        const incomeData = this.getIncomeByCategory();
-        
-        if (incomeData.length === 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Tidak ada data pemasukan', canvas.width / 2, canvas.height / 2);
-            return;
-        }
-        
-        window.incomePieChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: incomeData.map(item => item.category),
-                datasets: [{
-                    data: incomeData.map(item => item.amount),
-                    backgroundColor: incomeData.map(item => item.color),
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.raw / total) * 100).toFixed(1);
-                                return `${context.label}: ${percentage}%`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    updateCategoryReportTable() {
-        const tbody = document.getElementById('categoryReportTable');
-        const categoryReport = this.getCategoryReport();
-        
-        tbody.innerHTML = '';
-        
-        categoryReport.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <div class="category-indicator">
-                        <div class="category-color" style="background-color: ${item.color}"></div>
-                        <span>${item.category}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="type-badge ${item.type}">
-                        ${item.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
-                    </span>
-                </td>
-                <td style="text-align: right; font-weight: 600;">${this.formatCurrency(item.total)}</td>
-                <td style="text-align: right;">${item.count}</td>
-                <td style="text-align: right;">${this.formatCurrency(item.average)}</td>
-                <td style="text-align: right;">
-                    <span class="percentage-badge">${item.percentage}%</span>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    updateFinancialInsights() {
-        const container = document.getElementById('financialInsights');
-        const stats = this.calculateStats();
-        const expenseData = this.getExpenseByCategory();
-        
-        container.innerHTML = '';
-        
-        // Balance insight
-        const balanceInsight = document.createElement('div');
-        balanceInsight.className = `insight-card ${stats.balance >= 0 ? 'success' : 'danger'}`;
-        balanceInsight.innerHTML = `
-            <h4>${stats.balance >= 0 ? '✅ Keuangan Sehat' : '⚠️ Perlu Perhatian'}</h4>
-            <p>
-                ${stats.balance >= 0 
-                    ? `Anda memiliki surplus sebesar ${this.formatCurrency(stats.balance)}. Pertahankan pola ini dan pertimbangkan untuk menabung atau berinvestasi.`
-                    : `Anda mengalami defisit sebesar ${this.formatCurrency(Math.abs(stats.balance))}. Pertimbangkan untuk mengurangi pengeluaran atau meningkatkan pemasukan.`
-                }
-            </p>
-        `;
-        container.appendChild(balanceInsight);
-        
-        // Top spending category
-        if (expenseData.length > 0) {
-            const topSpendingInsight = document.createElement('div');
-            topSpendingInsight.className = 'insight-card warning';
-            const topCategory = expenseData[0];
-            const percentage = ((topCategory.amount / stats.totalExpense) * 100).toFixed(1);
-            
-            topSpendingInsight.innerHTML = `
-                <h4>📊 Kategori Pengeluaran Terbesar</h4>
-                <p>
-                    ${topCategory.category} adalah kategori pengeluaran terbesar Anda (${percentage}% dari total pengeluaran). 
-                    Pertimbangkan untuk mengoptimalkan pengeluaran di kategori ini.
-                </p>
-            `;
-            container.appendChild(topSpendingInsight);
-        }
-        
-        // Savings rate insight
-        const savingsInsight = document.createElement('div');
-        savingsInsight.className = 'insight-card warning';
-        savingsInsight.innerHTML = `
-            <h4>💰 Tingkat Tabungan</h4>
-            <p>
-                Tingkat tabungan Anda saat ini adalah ${stats.savingRatio}%. 
-                ${stats.savingRatio >= 20 
-                    ? 'Excellent! Anda sudah menabung dengan baik.' 
-                    : 'Cobalah untuk menabung minimal 20% dari pemasukan.'
-                }
-            </p>
-        `;
-        container.appendChild(savingsInsight);
     }
 
     getExpenseByCategory() {
@@ -789,7 +679,8 @@ window.addEventListener('resize', () => {
             if (window.moneyTracker.currentView === 'dashboard') {
                 window.moneyTracker.updateDashboardCharts();
             } else if (window.moneyTracker.currentView === 'reports') {
-                window.moneyTracker.updatePieCharts();
+                window.moneyTracker.updateExpensePieChart();
+                window.moneyTracker.updateTrendChart();
             }
         }, 100);
     }

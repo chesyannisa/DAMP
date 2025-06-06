@@ -355,24 +355,18 @@ class MoneyTracker {
     }
 
     updateDashboardCharts() {
-        this.updateExpensePieChart();
-        this.updateTrendChart();
+        this.updateExpensePieChart('expenseChartDashboard');
+        this.updateTrendChart('trendChartDashboard');
     }
 
-    // Updated function to create a pie chart for expense categories
-    updateExpensePieChart() {
-        const canvas = document.getElementById('expenseChart');
+    updateExpensePieChart(canvasId = 'expenseChart') {
+        const canvas = document.getElementById(canvasId);
         if (!canvas) return;
-        
         const ctx = canvas.getContext('2d');
-        
-        // Clear previous chart
-        if (window.expenseChart) {
-            window.expenseChart.destroy();
+        if (window[canvasId + 'Instance']) {
+            window[canvasId + 'Instance'].destroy();
         }
-        
         const expenseData = this.getExpenseByCategory();
-        
         if (expenseData.length === 0) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#6b7280';
@@ -381,14 +375,11 @@ class MoneyTracker {
             ctx.fillText('Tidak ada data pengeluaran', canvas.width / 2, canvas.height / 2);
             return;
         }
-        
-        // Animation configuration
         const animationOptions = {
             animateRotate: true,
             animateScale: true
         };
-        
-        window.expenseChart = new Chart(ctx, {
+        window[canvasId + 'Instance'] = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: expenseData.map(item => item.category),
@@ -413,7 +404,25 @@ class MoneyTracker {
                             },
                             padding: 20,
                             usePointStyle: true,
-                            pointStyle: 'circle'
+                            pointStyle: 'circle',
+                            // Tampilkan persentase di label legend
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (!data.labels.length) return [];
+                                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return {
+                                        text: `${label} (${percentage}%)`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        strokeStyle: '#fff',
+                                        lineWidth: 2,
+                                        hidden: isNaN(data.datasets[0].data[i]) || chart.getDataVisibility(i) === false,
+                                        index: i
+                                    };
+                                });
+                            }
                         }
                     },
                     tooltip: {
@@ -436,21 +445,20 @@ class MoneyTracker {
         });
     }
 
-    // Updated function to ensure the trend chart displays income vs expense data correctly
-    updateTrendChart() {
-        const canvas = document.getElementById('trendChart');
+    updateTrendChart(canvasId = 'trendChart') {
+        const canvas = document.getElementById(canvasId);
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         
         // Clear previous chart
-        if (window.trendChart) {
-            window.trendChart.destroy();
+        if (window[canvasId + 'Instance']) {
+            window[canvasId + 'Instance'].destroy();
         }
         
         const weeklyData = this.getWeeklyData();
         
-        window.trendChart = new Chart(ctx, {
+        window[canvasId + 'Instance'] = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: weeklyData.map(item => item.day),

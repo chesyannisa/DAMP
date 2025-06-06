@@ -50,7 +50,7 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    weight: 40px;
+    font-weight: 40px;
     height: 40px;
     border-radius: 50px;
 }
